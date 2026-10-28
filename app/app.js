@@ -181,15 +181,20 @@ function simulate(f, count) {
 }
 
 // ---------- router ----------
-var route = {};
+var route = {}, curHash = '';
+function go(h) { curHash = h; window.scrollTo(0, 0); render(); }
+document.addEventListener('click', function (e) {
+  var l = e.target.closest('a[href^="#/"]'); if (!l) return;
+  e.preventDefault(); go(l.getAttribute('href'));
+});
 function parse() {
-  var parts = location.hash.replace(/^#\/?/, '').split('?')[0].split('/');
+  var parts = curHash.replace(/^#\/?/, '').split('?')[0].split('/');
   if (parts[0] === 'live') return { view: 'live', id: parts[1] };
   if (parts[0] === 'f') return { view: parts[2] || 'edit', id: parts[1] };
   if (parts[0] === 'brands') return { view: 'brands' };
+  if (parts[0] === 'evidence') return { view: 'evidence' };
   return { view: 'funnels' };
 }
-window.addEventListener('hashchange', function () { route = parse(); render(); });
 
 function toast(msg) { var t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(function () { t.hidden = true; }, 2600); }
 
@@ -202,9 +207,10 @@ function render() {
   var nav = '<nav class="side"><a class="logo" href="#/">◆ Funnelkit</a>' +
     '<a href="#/" class="' + (route.view === 'funnels' ? 'on' : '') + '">Funnels</a>' +
     '<a href="#/brands" class="' + (route.view === 'brands' ? 'on' : '') + '">Brands</a>' +
-    '<div class="side-foot"><a href="../EVIDENCE.md" target="_blank" rel="noopener">Wie Perspective funktioniert</a></div></nav>';
+    '<a href="#/evidence" class="' + (route.view === 'evidence' ? 'on' : '') + '">So funktioniert Perspective</a></nav>';
   var body;
   if (route.view === 'brands') body = viewBrands();
+  else if (route.view === 'evidence') body = '<article class="doc">' + (window.EVIDENCE_HTML || '<p>Siehe EVIDENCE.md im Repository.</p>') + '</article>';
   else if (f) body = viewFunnelShell(f);
   else body = viewFunnels();
   app.innerHTML = nav + '<div class="main">' + body + '</div>';
@@ -226,7 +232,7 @@ function viewFunnelShell(f) {
   var head = '<header class="top"><div><a class="muted small" href="#/">← Funnels</a><h1 contenteditable="true" spellcheck="false" data-bind="fname">' + esc(f.name) + '</h1></div>' +
     '<div class="row"><span class="pill ' + f.status + '">' + f.status + '</span>' +
     '<button class="btn" data-act="export">HTML exportieren</button>' +
-    '<a class="btn" href="#/live/' + f.id + '?utm_source=demo" target="_blank" rel="noopener">Live öffnen ↗</a>' +
+    '<a class="btn" href="#/live/' + f.id + '?utm_source=demo">Live ansehen</a>' +
     '<button class="btn primary" data-act="publish">' + (f.status === 'live' ? 'Offline nehmen' : 'Veröffentlichen') + '</button></div></header>' +
     '<div class="tabs">' + tabs.map(function (t) { return '<a href="#/f/' + f.id + '/' + t[0] + '" class="' + (route.view === t[0] ? 'on' : '') + '">' + t[1] + '</a>'; }).join('') + '</div>';
   var v = route.view === 'contacts' ? viewContacts(f) : route.view === 'automations' ? viewAutomations(f) : route.view === 'analytics' ? viewAnalytics(f) : viewEditor(f);
@@ -338,7 +344,7 @@ function viewAutomations(f) {
 }
 
 function viewAnalytics(f) {
-  var days = +(sessionStorage.getItem('fk_days') || 30), a = analytics(f, days);
+  var days = analyticsDays, a = analytics(f, days);
   var max = Math.max.apply(null, a.pages.map(function (p) { return p.value; }).concat(1));
   var kpi = function (label, v) { return '<div class="kpi"><div class="muted small">' + label + '</div><div class="kpi-v">' + v + '</div></div>'; };
   var bars = function (obj) { var k = Object.keys(obj), m = Math.max.apply(null, k.map(function (x) { return obj[x]; }).concat(1));
@@ -371,9 +377,9 @@ function renderLive() {
   var f = funnel(route.id);
   document.body.classList.add('live');
   if (!f) { $('#app').innerHTML = '<div class="empty">Funnel nicht gefunden.</div>'; return; }
-  $('#app').innerHTML = '<iframe id="live" title="' + esc(f.name) + '"></iframe>';
+  $('#app').innerHTML = '<iframe id="live" title="' + esc(f.name) + '"></iframe><a class="btn live-close" href="#/f/' + f.id + '/edit">← Zurück zum Editor</a>';
   // Pass the page's own query (utm params) through to the funnel.
-  var q = location.hash.split('?')[1] || '';
+  var q = curHash.split('?')[1] || '';
   var html = PF.toHTML(f, brand(f.brandId)).replace('new URLSearchParams(location.search)', 'new URLSearchParams(' + JSON.stringify(q) + ')');
   $('#live').srcdoc = html;
 }
@@ -392,10 +398,10 @@ function bind(f) {
     switch (act) {
       case 'new-funnel':
         var nf = JSON.parse(JSON.stringify(seed().funnels[0])); nf.id = oid(); nf.name = 'Neuer Funnel'; nf.brandId = db.brands[0] && db.brands[0].id;
-        db.funnels.unshift(nf); save(); location.hash = '#/f/' + nf.id + '/edit'; return;
+        db.funnels.unshift(nf); save(); go('#/f/' + nf.id + '/edit'); return;
       case 'sel-page': sel.page = +a.dataset.i; break;
       case 'add-page': f.pages.push({ id: oid(), name: 'Seite ' + (f.pages.length + 1), role: 'page', blocks: [] }); sel.page = f.pages.length - 1; break;
-      case 'del-page': if (f.pages.length > 1 && confirm('Seite „' + page.name + '“ löschen?')) { f.pages.splice(sel.page, 1); sel.page = 0; } break;
+      case 'del-page': if (f.pages.length < 2 || !armed(a)) return; f.pages.splice(sel.page, 1); sel.page = 0; break;
       case 'move-page': move(f.pages, sel.page, +a.dataset.d); sel.page = Math.max(0, Math.min(f.pages.length - 1, sel.page + +a.dataset.d)); break;
       case 'add-block': page.blocks.push(newBlock(a.dataset.t, f)); break;
       case 'del-block': page.blocks.splice(bi, 1); break;
@@ -404,18 +410,18 @@ function bind(f) {
       case 'del-opt': page.blocks[bi].options.splice(+a.dataset.j, 1); break;
       case 'reload': break;
       case 'publish': f.status = f.status === 'live' ? 'offline' : 'live'; f.version++; toast(f.status === 'live' ? 'Veröffentlicht (v' + f.version + ')' : 'Offline genommen'); break;
-      case 'export': download(f); return;
+      case 'export': showExport(f); return;
       case 'add-seq': f.sequences.push({ id: oid(), name: 'Neue Automation', published: false, version: 1, steps: [{ id: uuid(), type: 'status', status: f.statuses[0] }] }); break;
-      case 'del-seq': if (confirm('Automation löschen?')) f.sequences.splice(+sEl.dataset.si, 1); break;
+      case 'del-seq': if (!armed(a)) return; f.sequences.splice(+sEl.dataset.si, 1); break;
       case 'add-step': seq.steps.push(a.dataset.t === 'filter' ? { id: uuid(), type: 'filter', filter: { type: 'group', operator: 'AND', conditions: [] } }
         : a.dataset.t === 'delay' ? { id: uuid(), type: 'delay', delay: { days: 0, hours: 0, minutes: 0, seconds: 0 } }
         : { id: uuid(), type: 'email', name: 'E-Mail', subject: 'Hallo {{firstName|}}', body: '' }); break;
       case 'del-step': seq.steps.splice(+stEl.dataset.ti, 1); break;
       case 'add-cond': step.filter.conditions.push({ type: 'condition', fieldName: 'email', operator: 'HAS_VALUE', value: '' }); break;
       case 'del-cond': step.filter.conditions.splice(+a.dataset.ci, 1); break;
-      case 'days': sessionStorage.setItem('fk_days', a.dataset.d); break;
+      case 'days': analyticsDays = +a.dataset.d; break;
       case 'simulate': simulate(f, 50); toast('50 simulierte Besucher erzeugt'); break;
-      case 'reset-data': if (!confirm('Alle Events, Kontakte und Nachrichten dieses Funnels löschen?')) return; f.events = []; f.contacts = []; f.messages = []; break;
+      case 'reset-data': if (!armed(a)) return; f.events = []; f.contacts = []; f.messages = []; break;
       case 'add-brand': db.brands.push(Object.assign({ id: oid(), name: 'Neue Brand' }, PF.DEFAULT_THEME)); break;
       default: return;
     }
@@ -469,10 +475,32 @@ function newBlock(t, f) {
     score: { id: id, type: t, tiers: [{ min: 0, max: 4, text: 'Da ist noch Luft nach oben.' }, { min: 5, max: 7, text: 'Solide Basis!' }, { min: 8, max: 99, text: 'Hervorragend!' }] }
   }[t];
 }
-function download(f) {
-  var blob = new Blob([PF.toHTML(f, brand(f.brandId))], { type: 'text/html' });
-  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = slug(f.name) + '.html'; a.click();
-  setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+var analyticsDays = 30;
+// Destructive buttons need a second click (the artifact viewer has no confirm()).
+function armed(btn) {
+  if (btn.dataset.armed) return true;
+  btn.dataset.armed = '1'; btn.dataset.label = btn.textContent; btn.textContent = 'Nochmal klicken'; btn.classList.add('armed');
+  setTimeout(function () { if (btn.isConnected) { delete btn.dataset.armed; btn.textContent = btn.dataset.label; btn.classList.remove('armed'); } }, 2500);
+  return false;
+}
+function showExport(f) {
+  var m = $('#modal');
+  m.innerHTML = '<div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="exp-h"><div class="row between"><strong id="exp-h">Veröffentlichtes HTML</strong>' +
+    '<button class="icon" data-act="close-modal" title="Schließen">✕</button></div><p class="muted small">Eine eigenständige Datei: Seiten, Styles und Tracking-SDK. Kopieren und als .html speichern.</p>' +
+    '<textarea id="export-html" readonly rows="14"></textarea><div class="row"><button class="btn primary" data-act="copy-html">Kopieren</button></div></div>';
+  $('#export-html').value = PF.toHTML(f, brand(f.brandId));
+  m.hidden = false;
+}
+function copyExport(btn) {
+  var t = $('#export-html');
+  var done = function () { btn.textContent = 'Kopiert'; };
+  try { navigator.clipboard.writeText(t.value).then(done, function () { t.select(); toast('Text markiert: mit Strg/Cmd+C kopieren'); }); }
+  catch (e) { t.select(); toast('Text markiert: mit Strg/Cmd+C kopieren'); }
 }
 
+document.addEventListener('click', function (e) {
+  var a = e.target.closest('#modal [data-act]'); if (!a) return;
+  if (a.dataset.act === 'close-modal') $('#modal').hidden = true;
+  if (a.dataset.act === 'copy-html') copyExport(a);
+});
 render();

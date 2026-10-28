@@ -9,7 +9,7 @@ function PF_SDK(meta) {
   function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
   var uid = store(KEY_UID) || (store(KEY_UID, rid()), store(KEY_UID)) || rid();
   var sessionId = rid();
-  var answers = {}, listeners = {}, current = null, firstSeen = new Date().toISOString();
+  var answers = {}, points = {}, listeners = {}, current = null, firstSeen = new Date().toISOString();
   var params = new URLSearchParams(location.search);
   var utm = {};
   ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'].forEach(function (k) { if (params.get(k)) utm[k] = params.get(k); });
@@ -69,7 +69,7 @@ function PF_SDK(meta) {
     var group = btn.closest('[data-ps-question]');
     if (btn.hasAttribute('data-answer-option') && group) {
       sdk.answer({ questionId: group.dataset.psQuestion, value: btn.dataset.psValue || btn.textContent.trim() });
-      if (btn.dataset.points) { var pts = JSON.parse(sessionStorage.getItem('pf_points') || '{}'); pts[group.dataset.psQuestion] = +btn.dataset.points; sessionStorage.setItem('pf_points', JSON.stringify(pts)); }
+      if (btn.dataset.points) points[group.dataset.psQuestion] = +btn.dataset.points;
     }
     if (btn.hasAttribute('data-input-next')) {
       var inp = group && group.querySelector('input,textarea');
@@ -88,14 +88,13 @@ function PF_SDK(meta) {
     sdk.submitForm(form).then(function () { if (form.dataset.pageTargetOnSubmit) sdk.goToPage(form.dataset.pageTargetOnSubmit); });
   });
   sdk.on('page:navigate', function () {
-    var pts = JSON.parse(sessionStorage.getItem('pf_points') || '{}'), total = 0;
-    Object.keys(pts).forEach(function (k) { total += pts[k]; });
+    var total = 0;
+    Object.keys(points).forEach(function (k) { total += points[k]; });
     document.querySelectorAll('[data-score]').forEach(function (el) { el.textContent = total; });
     document.querySelectorAll('[data-tier]').forEach(function (el) {
       el.hidden = !(total >= +el.dataset.min && total <= +el.dataset.max);
     });
   });
-  sessionStorage.removeItem('pf_points');
   var home = document.querySelector('section[data-page-role="home"]') || pages()[0];
   if (home) sdk.goToPage(home.dataset.pageName);
 }
