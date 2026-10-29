@@ -2,12 +2,14 @@
 
 - **`EVIDENCE.md`**: how Perspective (app.perspective.co) works, reverse-engineered from its live API responses and published funnel HTML.
 - **`app/`**: a working clone as a dependency-free web app.
+- **`landing/`**: the RESULTZ landing page for kitchen studios (Triple-A-System). Its contact form, CTAs and potential calculator report through the Funnelkit SDK (`app/runtime.js`), so leads arrive as `submit` events like a funnel's.
 
 ## Run
 
 ```bash
 python3 -m http.server 8000   # from the repo root
-# open http://localhost:8000/app/
+# open http://localhost:8000/app/       (funnel builder)
+# open http://localhost:8000/landing/   (landing page)
 ```
 No build step. All data lives in your browser's localStorage.
 
