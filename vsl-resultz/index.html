@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<style>
+@font-face{font-family:PJS;src:url(fonts/PJS-500.woff2);font-weight:500}
+@font-face{font-family:PJS;src:url(fonts/PJS-600.woff2);font-weight:600}
+@font-face{font-family:PJS;src:url(fonts/PJS-700.woff2);font-weight:700}
+@font-face{font-family:PJS;src:url(fonts/PJS-800.woff2);font-weight:800}
+@font-face{font-family:Hand;src:url(fonts/FeelingPassionate.woff2)}
+:root{
+  --ink:#0F0F0E;--ink2:#161615;--card:#1F1E1C;--card2:#242321;--line:#2E2C29;--line2:#3A3835;
+  --paper:#F3F1EC;--mute:#B8B4AC;--mute2:#8A867E;--green:#5BBF6A;--orange:#EC8946;--red:#E5402B;
+  --grad:linear-gradient(90deg,#E5402B 0%,#EC8946 100%);
+}
+*{box-sizing:border-box;margin:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:var(--ink)}
+body{font-family:PJS,sans-serif;color:var(--paper);-webkit-font-smoothing:antialiased}
+#stage{position:absolute;inset:0;overflow:hidden;background:var(--ink)}
+#bg{position:absolute;left:-240px;top:-135px;width:2400px;height:1350px;will-change:transform}
+#bgGrid{position:absolute;inset:0;background-image:linear-gradient(to right,rgba(243,241,236,.03) 1px,transparent 1px);background-size:160px 100%;background-position:96px 0}
+#bgLight{position:absolute;inset:0;background:radial-gradient(1100px 700px at 22% 18%,rgba(236,137,70,.09),transparent 60%),radial-gradient(900px 900px at 85% 110%,rgba(91,191,106,.05),transparent 60%),radial-gradient(1600px 1000px at 50% 50%,transparent 55%,rgba(0,0,0,.5))}
+
+#spk{position:absolute;overflow:hidden;background:#000;will-change:transform}
+#spk img{position:absolute;left:0;top:0;transform-origin:0 0;filter:contrast(1.05) saturate(.93) brightness(.97)}
+#spkShade{position:absolute;inset:0;pointer-events:none}
+#spkBorder{position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px rgba(243,241,236,.10)}
+
+#gfx{position:absolute;inset:0}
+.scene{position:absolute;inset:0}
+.cover{position:absolute;inset:0;overflow:hidden}
+.cover .cbg{position:absolute;left:-240px;top:-135px;width:2400px;height:1350px}
+.cover .cdim{position:absolute;inset:0;background:rgba(12,12,11,.74);backdrop-filter:blur(16px) saturate(.8)}
+.edge{position:absolute;top:0;bottom:0;width:10px;background:var(--grad)}
+
+#subs{position:absolute;z-index:20;font-weight:700;line-height:1.18;text-shadow:0 2px 14px rgba(0,0,0,.65);will-change:transform}
+#subs .w{display:inline-block;margin-right:.26em}
+#subs .on{color:var(--green)}
+#subs.boxed{background:rgba(15,15,14,.82);padding:12px 22px 14px;border-radius:14px;text-shadow:none;box-shadow:0 0 0 1px var(--line)}
+
+#grain{position:absolute;inset:-64px;z-index:40;opacity:.085;mix-blend-mode:overlay;background:url(gen/grain.png);pointer-events:none}
+#vign{position:absolute;inset:0;z-index:39;pointer-events:none;background:radial-gradient(1500px 950px at 50% 48%,transparent 62%,rgba(0,0,0,.32))}
+
+/* building blocks */
+.abs{position:absolute}
+.lbl{font-weight:600;font-size:22px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.chapnum{font-weight:800;color:var(--orange)}
+.pill{display:inline-flex;align-items:center;gap:10px;border-radius:999px;padding:10px 20px;font-weight:600;font-size:22px;background:rgba(243,241,236,.07);color:var(--mute);box-shadow:inset 0 0 0 1px var(--line2);white-space:nowrap}
+.pill.g{background:rgba(91,191,106,.14);color:var(--green);box-shadow:inset 0 0 0 1px rgba(91,191,106,.35)}
+.pill.r{background:rgba(229,64,43,.14);color:#F06A55;box-shadow:inset 0 0 0 1px rgba(229,64,43,.4)}
+.pill.o{background:rgba(236,137,70,.14);color:var(--orange);box-shadow:inset 0 0 0 1px rgba(236,137,70,.4)}
+.pill svg{width:100%;height:100%}
+.pill>span{flex:none}
+.card{position:absolute;border-radius:16px;background:var(--card);box-shadow:0 0 0 1px var(--line),0 24px 60px rgba(0,0,0,.45)}
+.h1{font-weight:800;letter-spacing:-.025em;line-height:.98}
+.grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.green{color:var(--green)}.red{color:var(--red)}.mute{color:var(--mute2)}.orange{color:var(--orange)}
+.hand{font-family:Hand;line-height:1;white-space:nowrap}
+.kw{display:inline-block;overflow:hidden;vertical-align:top;padding:0 .02em .14em;margin-bottom:-.14em}
+.kw>span{display:inline-block;will-change:transform}
+.num{font-variant-numeric:tabular-nums}
+.check{width:40px;height:40px;border-radius:999px;display:grid;place-items:center;flex:none}
+</style>
+</head>
+<body>
+<div id="stage">
+  <img id="bg" src="gen/stone.jpg" alt="">
+  <div id="bgGrid"></div>
+  <div id="bgLight"></div>
+  <div id="spk"><img id="spkImg" alt=""><div id="spkShade"></div><div id="spkBorder"></div></div>
+  <div id="gfx"></div>
+  <div id="subs"></div>
+  <div id="vign"></div>
+  <div id="grain"></div>
+</div>
+<script src="data/edl.js"></script>
+<script src="data/subs.js"></script>
+<script src="data/timeline.js"></script>
+<script src="engine.js"></script>
+</body>
+</html>
