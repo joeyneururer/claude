@@ -24,4 +24,12 @@ No build step. All data lives in your browser's localStorage.
 | Analytics: sessions, conversion, completion, page-to-page, button clicks, devices, UTM | Same, computed from the event stream |
 | Brands: design tokens injected at publish | Same token names |
 
+## Editor
+
+- Perspective-style layout: top bar (Funnel · Metriken · Kontakte · Automationen), left panel with **Übersicht** (pages, layers with drag & drop, element palette) and **AI Chat**, canvas with a bottom toolbar (select/preview, HTML, page navigation, mobile/desktop, add element, undo/redo), inspector on the right.
+- Click an element in the canvas to select it; double-click to edit text in place. The floating toolbar does bold/italic, alignment, colour, move, duplicate, ask AI and delete.
+- 16 element types: heading, text, badge, image, button, single choice (list or tiles, emoji, points), multi choice, input, contact form, list, features, FAQ, testimonial, quiz score, divider, spacer.
+- **AI Chat** sends the funnel JSON plus the selected element to Claude through the artifact `sample` capability and applies the returned pages as one undoable step. It only works in the published artifact on claude.ai.
+- `python3 app/build_artifact.py OUT.html` bundles everything into one file for publishing.
+
 Not cloned: the AI generator, real email/WhatsApp delivery, multi-user/teams, custom domains, A/B tests.

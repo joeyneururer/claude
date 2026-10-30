@@ -67,7 +67,7 @@ def main(out):
     css = (ROOT / "styles.css").read_text()
     evidence = md_to_html((ROOT.parent / "EVIDENCE.md").read_text())
     js = "window.EVIDENCE_HTML = " + json.dumps(evidence).replace("</", "<\\/") + ";\n"
-    js += (ROOT / "runtime.js").read_text() + "\n" + (ROOT / "app.js").read_text()
+    js += (ROOT / "runtime.js").read_text() + "\n" + (ROOT / "editor.js").read_text() + "\n" + (ROOT / "app.js").read_text()
     assert "</script" not in js.lower()
     page = f"""<title>Funnelkit</title>
 <meta name="claude:viewport-fit-sides" content="cover">

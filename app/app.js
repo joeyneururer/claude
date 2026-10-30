@@ -18,28 +18,39 @@ function brand(id) { return db.brands.find(function (b) { return b.id === id; })
 function seed() {
   var brandId = oid(), fid = oid();
   var p = function (name, role, blocks) { return { id: oid(), name: name, role: role, blocks: blocks }; };
-  var choice = function (q, title, opts, target) { return { id: uuid().slice(0, 8), type: 'choice', questionId: q, title: title, options: opts.map(function (o) { return { label: o, target: target, points: '' }; }) }; };
+  var n = 0, bid = function () { return 'b' + (++n) + oid().slice(-5); };
+  var choice = function (q, title, opts, target, layout) { return { id: bid(), type: 'choice', questionId: q, title: title, layout: layout || 'list', style: {},
+    options: opts.map(function (o) { return { label: o[0], icon: o[1] || '', target: target, points: '' }; }) }; };
   return {
     workspaces: [{ id: oid(), name: 'Mein Workspace' }],
     brands: [{ id: brandId, name: 'Küchenstudio Demo', backgroundColor: '#faf7f2', fontColor: '#1f2937', buttonBackgroundColor: '#b45309', primaryText: '#ffffff',
       surface: '#ffffff', border: '#e7e1d8', mutedText: '#57534e', borderRadius: 16, font: 'Inter', contentAlign: 'center', logoUrl: '' }],
     funnels: [{
       id: fid, name: 'Küchen-Quiz', status: 'draft', brandId: brandId, version: 1, createdAt: new Date().toISOString(),
+      settings: { progress: true, back: true, title: 'Traumküche in 60 Sekunden', description: '' },
       statuses: ['New', 'Kontaktiert', 'Qualifizierter Interessent', 'Termin', 'Verloren'],
       pages: [
         p('Start', 'home', [
-          { id: 'h1', type: 'heading', text: 'Finde in 60 Sekunden deine Traumküche' },
-          { id: 't1', type: 'text', text: 'Beantworte 3 kurze Fragen und erhalte ein unverbindliches Angebot.' },
-          { id: 'b1', type: 'button', label: 'Jetzt starten', target: 'Stil' }]),
-        p('Stil', 'page', [choice('stil', 'Welcher Stil gefällt dir?', ['Modern', 'Landhaus', 'Industrial'], 'Budget')]),
-        p('Budget', 'page', [choice('budget', 'Welches Budget planst du?', ['bis 8.000 €', '8.000 – 12.000 €', 'über 12.000 €'], 'Zeitraum')]),
-        p('Zeitraum', 'page', [choice('zeitraum', 'Wann soll die Küche kommen?', ['In 1–3 Monaten', 'In 3–6 Monaten', 'Später'], 'Kontakt')]),
+          { id: bid(), type: 'badge', text: '60 Sekunden · kostenlos', style: {} },
+          { id: bid(), type: 'heading', level: 1, html: 'Finde in 60 Sekunden deine <span style="color:#b45309">Traumküche</span>', style: {} },
+          { id: bid(), type: 'text', html: 'Beantworte 4 kurze Fragen und erhalte ein unverbindliches Angebot von unseren Planern.', style: {} },
+          { id: bid(), type: 'button', label: 'Jetzt starten', target: 'Stil', variant: 'primary', url: '', style: {} },
+          { id: bid(), type: 'list', icon: 'check', items: ['Persönliche 3D-Planung', 'Festpreis ohne versteckte Kosten', 'Montage durch eigene Schreiner'], style: { space: 'm' } },
+          { id: bid(), type: 'testimonial', quote: 'Von der Planung bis zur Montage lief alles reibungslos. Unsere Küche ist ein Traum!', name: 'Familie Berger', role: 'Kunden aus Leipzig', rating: 5, avatar: '', style: {} }]),
+        p('Stil', 'page', [choice('stil', 'Welcher Stil gefällt dir?', [['Modern', '✨'], ['Landhaus', '🌾'], ['Industrial', '🏭'], ['Skandinavisch', '🌲']], 'Wünsche', 'grid')]),
+        p('Wünsche', 'page', [{ id: bid(), type: 'multi', title: 'Was ist dir besonders wichtig?', questionId: 'wuensche', layout: 'list', min: 1, buttonLabel: 'Weiter', target: 'Budget', style: {},
+          options: [{ label: 'Viel Stauraum', icon: '🗄️' }, { label: 'Kochinsel', icon: '🏝️' }, { label: 'Hochwertige Geräte', icon: '🔥' }, { label: 'Pflegeleichte Oberflächen', icon: '🧽' }] }]),
+        p('Budget', 'page', [choice('budget', 'Welches Budget planst du?', [['bis 8.000 €'], ['8.000 – 12.000 €'], ['12.000 – 20.000 €'], ['über 20.000 €']], 'Zeitraum')]),
+        p('Zeitraum', 'page', [choice('zeitraum', 'Wann soll die Küche kommen?', [['In 1–3 Monaten', '🚀'], ['In 3–6 Monaten', '📅'], ['Später', '⏳']], 'Kontakt')]),
         p('Kontakt', 'page', [
-          { id: 'h2', type: 'heading', text: 'Fast geschafft!' },
-          { id: 'f1', type: 'form', fields: { name: true, email: true, phone: true }, consent: 'Ich stimme der Datenschutzerklärung zu.', submitLabel: 'Angebot anfordern', target: 'Danke' }]),
+          { id: bid(), type: 'heading', level: 2, html: 'Fast geschafft! Wohin dürfen wir dein Angebot schicken?', style: {} },
+          { id: bid(), type: 'form', fields: { firstName: true, lastName: false, email: true, phone: true, company: false, message: false }, required: { phone: false },
+            consent: 'Ich stimme der Datenschutzerklärung zu.', submitLabel: 'Angebot anfordern', note: '100 % kostenlos und unverbindlich.', target: 'Danke', style: {} },
+          { id: bid(), type: 'faq', items: [{ q: 'Was kostet die Planung?', a: 'Die Erstplanung ist kostenlos und unverbindlich.' }, { q: 'Wie schnell meldet ihr euch?', a: 'Innerhalb von 24 Stunden an Werktagen.' }], style: { space: 'm' } }]),
         p('Danke', 'result', [
-          { id: 'h3', type: 'heading', text: 'Danke! Wir melden uns innerhalb von 24 Stunden.' },
-          { id: 't3', type: 'text', text: 'Schau in dein Postfach: die Bestätigung ist unterwegs.' }])
+          { id: bid(), type: 'heading', level: 1, html: 'Danke! Wir melden uns innerhalb von 24 Stunden.', style: {} },
+          { id: bid(), type: 'text', html: 'Schau in dein Postfach: die Bestätigung ist unterwegs.', style: {} },
+          { id: bid(), type: 'features', items: [{ icon: '📞', title: 'Rückruf', text: 'Ein Planer ruft dich an.' }, { icon: '📐', title: '3D-Entwurf', text: 'Du bekommst deinen Entwurf.' }], style: {} }])
       ],
       sequences: [{
         id: oid(), name: 'Bestätigung an Lead', published: true, version: 1,
@@ -50,10 +61,12 @@ function seed() {
           { id: uuid(), type: 'email', name: 'Bestätigung', subject: '✅ Anfrage erhalten, {{firstName|hallo}}!',
             body: 'Hallo {{firstName|du}},\n\ndanke für deine Anfrage. Stil: {{stil|-}}, Budget: {{budget|-}}.\nWir melden uns in Kürze.' }]
       }],
-      contacts: [], events: [], messages: []
+      contacts: [], events: [], messages: [], chat: []
     }]
   };
 }
+
+function pick(o, keys) { var r = {}; keys.forEach(function (k) { if (o[k]) r[k] = o[k]; }); return r; }
 
 // ---------- event ingestion (the "api.perspective.co" side) ----------
 window.addEventListener('message', function (e) { if (e.data && e.data.pf) ingest(e.data.evt); });
@@ -72,7 +85,7 @@ function createContact(f, evt) {
   var first = sessionEvents[0];
   var contact = {
     id: oid(), email: c.email || '', firstName: c.firstName || '', phone: c.phone || '', status: f.statuses[0],
-    utmParams: evt.utmParams || {}, properties: Object.assign({}, evt.answers, c.consent !== undefined ? { consent: c.consent } : {}),
+    utmParams: evt.utmParams || {}, properties: Object.assign({}, evt.answers, c.consent !== undefined ? { consent: c.consent } : {}, pick(c, ['lastName', 'company', 'message'])),
     meta: { ps_source: 'funnel', ps_first_seen_at: evt.firstSeen || (first && first.ts), ps_converted_at: evt.ts,
       ps_start_page: first && first.page, ps_sessionId: evt.sessionId, simulated: !!evt.simulated }
   };
@@ -165,10 +178,12 @@ function simulate(f, count) {
       push('pageView');
       if (page.role === 'result') { push('complete'); break; }
       if (Math.random() < (page.role === 'home' ? .45 : .12)) break; // drop-off
-      var b = page.blocks.find(function (x) { return x.type === 'choice' || x.type === 'button' || x.type === 'form' || x.type === 'input'; });
+      var b = page.blocks.find(function (x) { return ['choice', 'multi', 'button', 'form', 'input'].indexOf(x.type) > -1 && !x.url; });
       if (!b) break;
       var target;
       if (b.type === 'choice') { var oi = Math.floor(Math.random() * b.options.length), o = b.options[oi]; answers[b.questionId] = o.label; push('click', { trackingId: b.id + '_' + oi }); push('answer', { questionId: b.questionId, value: o.label }); target = o.target; }
+      else if (b.type === 'multi') { var picked = b.options.filter(function () { return Math.random() < .5; }).map(function (o) { return o.label; }); if (!picked.length) picked = [b.options[0].label];
+        answers[b.questionId] = picked.join('; '); push('click', { trackingId: b.id }); push('answer', { questionId: b.questionId, value: answers[b.questionId] }); target = b.target; }
       else if (b.type === 'form') {
         var nm = names[Math.floor(Math.random() * names.length)];
         push('submit', { contact: { firstName: nm, email: nm.toLowerCase() + '@example.com' }, answers: Object.assign({}, answers), utmParams: src ? { utm_source: src } : {} });
@@ -204,6 +219,8 @@ function render() {
   if (route.view === 'live') { renderLive(); return; }
   document.body.classList.remove('live');
   var f = route.id && funnel(route.id);
+  if (f) { document.body.classList.add('studio'); app.innerHTML = viewStudio(f); bindStudio(f); if (route.view !== 'edit') bind(f); return; }
+  document.body.classList.remove('studio');
   var nav = '<nav class="side"><a class="logo" href="#/">◆ Funnelkit</a>' +
     '<a href="#/" class="' + (route.view === 'funnels' ? 'on' : '') + '">Funnels</a>' +
     '<a href="#/brands" class="' + (route.view === 'brands' ? 'on' : '') + '">Brands</a>' +
@@ -211,7 +228,6 @@ function render() {
   var body;
   if (route.view === 'brands') body = viewBrands();
   else if (route.view === 'evidence') body = '<article class="doc">' + (window.EVIDENCE_HTML || '<p>Siehe EVIDENCE.md im Repository.</p>') + '</article>';
-  else if (f) body = viewFunnelShell(f);
   else body = viewFunnels();
   app.innerHTML = nav + '<div class="main">' + body + '</div>';
   bind(f);
@@ -219,77 +235,17 @@ function render() {
 
 // ---------- views ----------
 function viewFunnels() {
-  return '<header class="top"><h1>Funnels</h1><button class="btn primary" data-act="new-funnel">+ Neuer Funnel</button></header>' +
+  var aiBox = '<form class="ai-create" id="ai-create"><label for="ai-desc"><strong>✦ Funnel mit KI erstellen</strong><span class="muted small">Beschreibe Angebot, Zielgruppe und Ziel. Die KI baut alle Seiten, Fragen und das Formular.</span></label>' +
+    '<div class="row"><input id="ai-desc" placeholder="z. B. Lead-Funnel für einen Implantologie-Kurs für Zahnärzte, Ziel: Beratungsgespräch"' + (AI.sample ? '' : ' disabled') + '>' +
+    '<button class="btn primary" type="submit"' + (AI.sample ? '' : ' disabled') + '>Erstellen</button></div>' +
+    (AI.sample === null ? '<span class="muted small">Funktioniert in der veröffentlichten Version auf claude.ai.</span>' : '') + '</form>';
+  return '<header class="top"><h1>Funnels</h1><button class="btn primary" data-act="new-funnel">+ Neuer Funnel</button></header>' + aiBox +
     '<div class="grid">' + db.funnels.map(function (f) {
+      migrate(f);
       var a = analytics(f, 30);
       return '<a class="fcard" href="#/f/' + f.id + '/edit"><div class="fcard-top"><strong>' + esc(f.name) + '</strong><span class="pill ' + f.status + '">' + f.status + '</span></div>' +
         '<div class="muted small">' + f.pages.length + ' Seiten · ' + f.contacts.length + ' Kontakte · ' + a.sessions + ' Sessions (30 T.)</div></a>';
     }).join('') + '</div>';
-}
-
-function viewFunnelShell(f) {
-  var tabs = [['edit', 'Editor'], ['contacts', 'Kontakte (' + f.contacts.length + ')'], ['automations', 'Automationen'], ['analytics', 'Analytics']];
-  var head = '<header class="top"><div><a class="muted small" href="#/">← Funnels</a><h1 contenteditable="true" spellcheck="false" data-bind="fname">' + esc(f.name) + '</h1></div>' +
-    '<div class="row"><span class="pill ' + f.status + '">' + f.status + '</span>' +
-    '<button class="btn" data-act="export">HTML exportieren</button>' +
-    '<a class="btn" href="#/live/' + f.id + '?utm_source=demo">Live ansehen</a>' +
-    '<button class="btn primary" data-act="publish">' + (f.status === 'live' ? 'Offline nehmen' : 'Veröffentlichen') + '</button></div></header>' +
-    '<div class="tabs">' + tabs.map(function (t) { return '<a href="#/f/' + f.id + '/' + t[0] + '" class="' + (route.view === t[0] ? 'on' : '') + '">' + t[1] + '</a>'; }).join('') + '</div>';
-  var v = route.view === 'contacts' ? viewContacts(f) : route.view === 'automations' ? viewAutomations(f) : route.view === 'analytics' ? viewAnalytics(f) : viewEditor(f);
-  return head + v;
-}
-
-var sel = { page: 0 };
-function pageOptions(f, cur) { return '<option value="">–</option>' + f.pages.map(function (p) { return '<option' + (p.name === cur ? ' selected' : '') + '>' + esc(p.name) + '</option>'; }).join(''); }
-
-function viewEditor(f) {
-  if (sel.page >= f.pages.length) sel.page = 0;
-  var page = f.pages[sel.page];
-  var pages = '<div class="panel pages"><div class="panel-h">Seiten</div>' + f.pages.map(function (p, i) {
-    return '<div class="page-item' + (i === sel.page ? ' on' : '') + '" data-act="sel-page" data-i="' + i + '"><span>' + (i + 1) + '. ' + esc(p.name) + '</span>' +
-      (p.role !== 'page' ? '<span class="tag">' + p.role + '</span>' : '') + '</div>';
-  }).join('') + '<button class="btn ghost full" data-act="add-page">+ Seite</button></div>';
-
-  var blocks = page.blocks.map(function (b, i) { return blockEditor(f, b, i); }).join('');
-  var editor = '<div class="panel blocks"><div class="panel-h row between"><span>Seite</span>' +
-    '<span class="row"><button class="icon" data-act="move-page" data-d="-1" title="Nach oben">↑</button><button class="icon" data-act="move-page" data-d="1" title="Nach unten">↓</button><button class="icon danger" data-act="del-page" title="Seite löschen">✕</button></span></div>' +
-    '<div class="row"><label class="fld grow"><span>Name</span><input data-page="name" value="' + esc(page.name) + '"></label>' +
-    '<label class="fld"><span>Rolle</span><select data-page="role">' + ['home', 'page', 'result'].map(function (r) { return '<option' + (r === page.role ? ' selected' : '') + '>' + r + '</option>'; }).join('') + '</select></label></div>' +
-    blocks + '<div class="add-row">' + ['heading', 'text', 'image', 'button', 'choice', 'input', 'form', 'score'].map(function (t) {
-      return '<button class="btn ghost sm" data-act="add-block" data-t="' + t + '">+ ' + t + '</button>'; }).join('') + '</div></div>';
-  var preview = '<div class="panel preview"><div class="panel-h row between"><span>Vorschau</span><button class="btn ghost sm" data-act="reload">↻ Neu laden</button></div>' +
-    '<div class="phone"><iframe id="preview" title="Funnel-Vorschau"></iframe></div><p class="muted small">Klicks in der Vorschau erzeugen echte Events, Kontakte und Automationen.</p></div>';
-  return '<div class="editor">' + pages + editor + preview + '</div>';
-}
-
-function blockEditor(f, b, i) {
-  var h = '<div class="block" data-i="' + i + '"><div class="block-h"><span class="tag">' + b.type + '</span><span class="row">' +
-    '<button class="icon" data-act="move-block" data-d="-1" title="Nach oben">↑</button><button class="icon" data-act="move-block" data-d="1" title="Nach unten">↓</button><button class="icon danger" data-act="del-block" title="Löschen">✕</button></span></div>';
-  var inp = function (k, label, v, type) { return '<label class="fld"><span>' + label + '</span><input data-b="' + k + '" value="' + esc(v == null ? '' : v) + '"' + (type ? ' type="' + type + '"' : '') + '></label>'; };
-  var tgt = function (k, label, v) { return '<label class="fld"><span>' + label + '</span><select data-b="' + k + '">' + pageOptions(f, v) + '</select></label>'; };
-  switch (b.type) {
-    case 'heading': case 'text': h += '<label class="fld"><span>Text</span><textarea data-b="text" rows="2">' + esc(b.text) + '</textarea></label>'; break;
-    case 'image': h += inp('url', 'Bild-URL', b.url); break;
-    case 'button': h += '<div class="row">' + inp('label', 'Beschriftung', b.label) + tgt('target', 'Ziel-Seite', b.target) + '</div>'; break;
-    case 'choice':
-      h += '<div class="row">' + inp('title', 'Frage', b.title) + inp('questionId', 'CRM-Feld', b.questionId) + '</div>' +
-        b.options.map(function (o, j) {
-          return '<div class="row opt-row" data-j="' + j + '"><input data-o="label" value="' + esc(o.label) + '" placeholder="Antwort"><select data-o="target" title="Ziel-Seite">' + pageOptions(f, o.target) + '</select>' +
-            '<input data-o="points" value="' + esc(o.points) + '" placeholder="Pkt." class="pts" title="Punkte für Score"><button class="icon danger" data-act="del-opt" data-j="' + j + '" title="Antwort löschen">✕</button></div>';
-        }).join('') + '<button class="btn ghost sm" data-act="add-opt">+ Antwort</button>';
-      break;
-    case 'input': h += '<div class="row">' + inp('title', 'Frage', b.title) + inp('questionId', 'CRM-Feld', b.questionId) + '</div><div class="row">' +
-      '<label class="fld"><span>Typ</span><select data-b="inputType">' + ['text', 'email', 'tel', 'number', 'url'].map(function (t) { return '<option' + (t === b.inputType ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select></label>' +
-      inp('buttonLabel', 'Button', b.buttonLabel) + tgt('target', 'Ziel-Seite', b.target) + '</div>'; break;
-    case 'form':
-      h += '<div class="row checks">' + ['name', 'email', 'phone'].map(function (k) { return '<label><input type="checkbox" data-ff="' + k + '"' + (b.fields[k] ? ' checked' : '') + '> ' + k + '</label>'; }).join('') + '</div>' +
-        inp('consent', 'Einwilligungstext (leer = keiner)', b.consent) + '<div class="row">' + inp('submitLabel', 'Button', b.submitLabel) + tgt('target', 'Nach Absenden', b.target) + '</div>'; break;
-    case 'score':
-      h += '<p class="muted small">Summiert die Punkte aller Antworten. Stufen: min–max → Text</p>' + b.tiers.map(function (t, j) {
-        return '<div class="row opt-row" data-j="' + j + '"><input data-t="min" value="' + t.min + '" class="pts"><input data-t="max" value="' + t.max + '" class="pts"><input data-t="text" value="' + esc(t.text) + '"></div>';
-      }).join(''); break;
-  }
-  return h + '</div>';
 }
 
 function viewContacts(f) {
@@ -311,7 +267,7 @@ function viewContacts(f) {
 
 function fieldNames(f) {
   var s = { firstName: 1, email: 1, phone: 1, utm_source: 1 };
-  f.pages.forEach(function (p) { p.blocks.forEach(function (b) { if (b.questionId) s[b.questionId] = 1; }); });
+  f.pages.forEach(function (p) { p.blocks.forEach(function (b) { if (b.questionId) s[b.questionId] = 1; if (b.type === 'form') ['lastName', 'company', 'message'].forEach(function (k) { if (b.fields[k]) s[k] = 1; }); }); });
   return Object.keys(s);
 }
 
@@ -387,29 +343,19 @@ function renderLive() {
 // ---------- interactions ----------
 function bind(f) {
   var main = $('.main');
-  if (route.view === 'edit' && f) $('#preview').srcdoc = PF.toHTML(f, brand(f.brandId));
+  if (!main) return;
+  var aiForm = $('#ai-create');
+  if (aiForm) aiForm.onsubmit = function (e) { e.preventDefault(); var d = $('#ai-desc').value.trim(); if (d) createWithAI(d); else $('#ai-desc').focus(); };
 
   main.onclick = function (e) {
     var a = e.target.closest('[data-act]'); if (!a) return;
-    var act = a.dataset.act, page = f && f.pages[sel.page];
-    var bEl = a.closest('.block'), bi = bEl ? +bEl.dataset.i : -1;
+    var act = a.dataset.act;
     var sEl = a.closest('.seq'), seq = sEl && f.sequences[+sEl.dataset.si];
     var stEl = a.closest('.step'), step = stEl && seq.steps[+stEl.dataset.ti];
     switch (act) {
       case 'new-funnel':
         var nf = JSON.parse(JSON.stringify(seed().funnels[0])); nf.id = oid(); nf.name = 'Neuer Funnel'; nf.brandId = db.brands[0] && db.brands[0].id;
         db.funnels.unshift(nf); save(); go('#/f/' + nf.id + '/edit'); return;
-      case 'sel-page': sel.page = +a.dataset.i; break;
-      case 'add-page': f.pages.push({ id: oid(), name: 'Seite ' + (f.pages.length + 1), role: 'page', blocks: [] }); sel.page = f.pages.length - 1; break;
-      case 'del-page': if (f.pages.length < 2 || !armed(a)) return; f.pages.splice(sel.page, 1); sel.page = 0; break;
-      case 'move-page': move(f.pages, sel.page, +a.dataset.d); sel.page = Math.max(0, Math.min(f.pages.length - 1, sel.page + +a.dataset.d)); break;
-      case 'add-block': page.blocks.push(newBlock(a.dataset.t, f)); break;
-      case 'del-block': page.blocks.splice(bi, 1); break;
-      case 'move-block': move(page.blocks, bi, +a.dataset.d); break;
-      case 'add-opt': page.blocks[bi].options.push({ label: 'Antwort', target: '', points: '' }); break;
-      case 'del-opt': page.blocks[bi].options.splice(+a.dataset.j, 1); break;
-      case 'reload': break;
-      case 'publish': f.status = f.status === 'live' ? 'offline' : 'live'; f.version++; toast(f.status === 'live' ? 'Veröffentlicht (v' + f.version + ')' : 'Offline genommen'); break;
       case 'export': showExport(f); return;
       case 'add-seq': f.sequences.push({ id: oid(), name: 'Neue Automation', published: false, version: 1, steps: [{ id: uuid(), type: 'status', status: f.statuses[0] }] }); break;
       case 'del-seq': if (!armed(a)) return; f.sequences.splice(+sEl.dataset.si, 1); break;
@@ -429,18 +375,11 @@ function bind(f) {
   };
 
   main.onchange = function (e) {
-    var t = e.target, page = f && f.pages[sel.page];
-    var bEl = t.closest('.block'), b = bEl && page.blocks[+bEl.dataset.i];
+    var t = e.target;
     var sEl = t.closest('.seq'), seq = sEl && f.sequences[+sEl.dataset.si];
     var stEl = t.closest('.step'), step = stEl && seq.steps[+stEl.dataset.ti];
     var brEl = t.closest('[data-bi]');
-    if (t.dataset.page) {
-      if (t.dataset.page === 'name') renamePage(f, page.name, t.value.trim() || page.name); else page[t.dataset.page] = t.value;
-    } else if (t.dataset.b && b) { b[t.dataset.b] = t.value; if (t.dataset.b === 'title' && b.questionId && b.questionId.indexOf('q_') === 0) b.questionId = slug(t.value); }
-    else if (t.dataset.o && b) b.options[+t.closest('[data-j]').dataset.j][t.dataset.o] = t.value;
-    else if (t.dataset.t && b) b.tiers[+t.closest('[data-j]').dataset.j][t.dataset.t] = t.dataset.t === 'text' ? t.value : +t.value;
-    else if (t.dataset.ff && b) b.fields[t.dataset.ff] = t.checked;
-    else if (t.dataset.status) { var c = f.contacts.find(function (x) { return x.id === t.dataset.status; }); c.status = t.value; c.meta.ps_user_edited_at = new Date().toISOString(); onStatus(f, c); toast('Status: ' + t.value); }
+    if (t.dataset.status) { var c = f.contacts.find(function (x) { return x.id === t.dataset.status; }); c.status = t.value; c.meta.ps_user_edited_at = new Date().toISOString(); onStatus(f, c); toast('Status: ' + t.value); }
     else if (t.dataset.act === 'statuses') f.statuses = t.value.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
     else if (t.dataset.seq) seq[t.dataset.seq] = t.type === 'checkbox' ? t.checked : t.value;
     else if (t.dataset.st && step) { if (t.dataset.st === 'op') step.filter.operator = t.value; else step[t.dataset.st] = t.value; }
@@ -452,8 +391,6 @@ function bind(f) {
     save(); render();
   };
 
-  var fname = $('[data-bind="fname"]');
-  if (fname) fname.onblur = function () { f.name = fname.textContent.trim() || f.name; save(); };
 }
 
 function renamePage(f, from, to) {
@@ -463,18 +400,6 @@ function renamePage(f, from, to) {
   });
 }
 function move(arr, i, d) { var j = i + d; if (j < 0 || j >= arr.length) return; var x = arr[i]; arr[i] = arr[j]; arr[j] = x; }
-function newBlock(t, f) {
-  var id = uuid().slice(0, 8);
-  var next = (f.pages[sel.page + 1] || {}).name || '';
-  return {
-    heading: { id: id, type: t, text: 'Überschrift' }, text: { id: id, type: t, text: 'Text' }, image: { id: id, type: t, url: '' },
-    button: { id: id, type: t, label: 'Weiter', target: next },
-    choice: { id: id, type: t, title: 'Neue Frage', questionId: 'q_' + id, options: [{ label: 'Ja', target: next, points: '' }, { label: 'Nein', target: next, points: '' }] },
-    input: { id: id, type: t, title: 'Deine Antwort', questionId: 'q_' + id, inputType: 'text', required: true, buttonLabel: 'Weiter', target: next },
-    form: { id: id, type: t, fields: { name: true, email: true, phone: false }, consent: 'Ich stimme der Datenschutzerklärung zu.', submitLabel: 'Absenden', target: next },
-    score: { id: id, type: t, tiers: [{ min: 0, max: 4, text: 'Da ist noch Luft nach oben.' }, { min: 5, max: 7, text: 'Solide Basis!' }, { min: 8, max: 99, text: 'Hervorragend!' }] }
-  }[t];
-}
 var analyticsDays = 30;
 // Destructive buttons need a second click (the artifact viewer has no confirm()).
 function armed(btn) {
