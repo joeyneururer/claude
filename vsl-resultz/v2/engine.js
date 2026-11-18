@@ -497,6 +497,7 @@ TYPES.pills = (root, sc) => {
       slideIn(n, t, it.at, it.dx ?? 0, it.dy ?? 26);
       const e = ease.inOutExpo(P(t, it.out ?? sc.e, 0.35));
       if (e > 0) n.style.clipPath = `inset(0 ${e * 100}% 0 0)`; else n.style.clipPath = 'none';
+      if (sc.cout === 'cut' && t >= sc.e) n.style.visibility = 'hidden';
     });
   };
 };
