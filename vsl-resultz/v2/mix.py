@@ -48,7 +48,7 @@ def place(buf, t0, gain_db=0.0, fade_in=0.0, fade_out=0.0, until=None):
     if fade_out: n = min(len(seg), int(fade_out * SR)); seg[-n:] *= np.linspace(1, 0, n)[:, None]
     return s, seg
 
-A = load("gen/musicA.mp3"); B = load("gen/musicB.mp3"); C = load("gen/musicC.mp3")
+A = load("gen/musicA2.mp3"); B = load("gen/musicB.mp3"); C = load("gen/musicC.mp3")
 for m in (A, B, C): m *= db(-20) / rms(m[int(5 * SR):int(60 * SR)])
 # extend C by 26 bars (105.46 BPM) with a short crossfade on the bar line
 bar = 4 * 60 / 105.46
@@ -64,11 +64,11 @@ for buf, t0, g, fi, fo, until in [(A, 0.0, 0, 1.5, 0.35, MK["gefahr"] - 0.02), (
     music[s:s + len(seg)] += seg
 # level automation: bed under voice, lift in pauses and on the end card
 t = np.arange(N) / SR
-base = np.full(N, -6.0)
-base[t > MK["speech_end"] + 0.1] = -1.5
+base = np.full(N, -13.0)
+base[t > MK["speech_end"] + 0.1] = -6.0
 k = int(0.8 * SR); cs = np.cumsum(np.pad(base, (k // 2, k - k // 2), mode="edge")); base = (cs[k:] - cs[:-k]) / k
-base[: int(0.4 * SR)] = -6.0
-gain = db(base) * (1 - (1 - db(-9.5)) * duck)     # −9.5 dB while he speaks
+base[: int(0.4 * SR)] = -13.0
+gain = db(base) * (1 - (1 - db(-11)) * duck)     # −11 dB while he speaks
 music *= gain[:, None]
 end_fade = int(0.7 * SR)
 music[-end_fade:] *= np.linspace(1, 0, end_fade)[:, None] ** 1.5
@@ -82,7 +82,10 @@ for fx in json.load(open("sfx.json")):
         b = load(f"gen/{fx['n']}.mp3")
         b *= db(-3) / (np.abs(b).max() + 1e-9)
         cache[fx["n"]] = b
-    s, seg = place(cache[fx["n"]], max(0, fx["t"]), 20 * np.log10(fx["v"] * 0.62))
+    buf = cache[fx["n"]]
+    if fx.get("cut"):
+        n = int(fx["cut"] * SR); buf = buf[:n].copy(); f = int(0.06 * SR); buf[-f:] *= np.linspace(1, 0, f)[:, None]
+    s, seg = place(buf, max(0, fx["t"]), 20 * np.log10(fx["v"] * 0.28))
     out[s:s + len(seg)] += seg
 
 out = np.clip(out, -1, 1)

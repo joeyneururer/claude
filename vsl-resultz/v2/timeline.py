@@ -71,6 +71,8 @@ a["peaks"] = F("keine kurzfristigen Peaks")
 a["marq"] = F("Marquardt Küchen zum Beispiel")
 a["hinter"] = F("Hinter diesen Ergebnissen")
 a["b1"] = F("Der erste Baustein")
+a["b1s"] = E("richtige Anziehung.") + 0.1
+a["wir"] = F("Wir bei RESULTZ")
 a["b2"] = F("Der zweite Baustein")
 a["passt"] = F("In deinen Kalender kommt nur")
 a["b3"] = F("Der dritte Baustein")
@@ -96,7 +98,7 @@ layout = [
     dict(t=a["bitter"], m="side", d=0), dict(t=a["ertrinkst"], m="full", d=0),
     dict(t=a["magisch"] - 0.6, m="side"), dict(t=a["nervt"] - 0.4, m="full"),
     dict(t=a["verstanden"], m="sideR"), dict(t=a["kanschat"], m="pip"),
-    dict(t=a["hinter"], m="pip", d=0), dict(t=a["b1"], m="side", d=0),
+    dict(t=a["hinter"], m="full", d=0), dict(t=a["b1s"], m="side", d=0),
     dict(t=a["passt"], m="full"), dict(t=a["b3"], m="side"),
     dict(t=a["grundsatz"], m="pip"), dict(t=a["weil"], m="full", d=0),
     dict(t=a["garant"], m="pip", d=0), dict(t=a["geeignet"], m="side", d=0),
@@ -138,11 +140,12 @@ add(type="stamp", dim="r", s=a["gefangen"] - 0.05, e=a["def"] - 0.05, at=a["gefa
 # ---------------- DEFINITION ----------------
 add(type="chapter", s=a["def"], e=a["klingt"] - 0.05, num="01", kicker="Das Aufmerksamkeits-Paradoxon", cin="circle", cx=960, cy=540, cout="wipe",
     shrinkAt=a["je"] - 0.3, title=W(("Das", a["def"] + 0.05), ("Paradoxon.", a["def"] + 0.4, "grad")), nosubs=True)
-add(type="kin", s=a["je"], e=a["klingt"] - 0.05, x=96, y=290, size=112, gap=14, cout="cut", nosubs=True, lines=[
-    dict(w=ws("je mehr Anfragen", 0, {2: "grad"})),
-    dict(w=ws("ein Betrieb einkauft,")),
-    dict(w=ws("desto mehr Zeit verschwendet er")),
-    dict(w=ws("an Menschen, die niemals kaufen werden.", 0, {3: "red", 4: "red"}))])
+_je = ws("je mehr Anfragen", 0, {2: "grad"}); _je[0][0] = "Je"
+add(type="kin", s=a["je"], e=a["klingt"] - 0.05, x=96, y=280, size=92, gap=16, nowrap=True, cout="cut", nosubs=True, lines=[
+    dict(w=_je),
+    dict(w=ws("ein Betrieb einkauft, desto mehr")),
+    dict(w=ws("Zeit verschwendet er an Menschen,")),
+    dict(w=ws("die niemals kaufen werden.", F("an Menschen, die"), {1: "red", 2: "red"}))])
 add(type="chart", s=a["klingt"], e=a["trifft"] - 0.05, x=972, y=330, w=780, h=420, title="Was jeder glaubt", series=[
     dict(pts=[[0, .12], [.25, .3], [.5, .5], [.75, .7], [1, .9]], color="green", at=F("Mehr Aufmerksamkeit,"), dur=2.6, label="das muss doch gut sein?", cls="g", lx=-380, ly=-80, labelAt=F("das muss doch"),
          morph=dict(pts=[[0, .12], [.25, .3], [.5, .34], [.75, .22], [1, .1]], at=a["genau"], dur=1.0, color="red", label="Paradoxon", cls="r", spring=True))])
@@ -154,14 +157,12 @@ add(type="hand", s=a["logisch"], e=a["trifft"] - 0.05, at=a["logisch"], dur=0.8,
 add(type="photo", s=a["ehrlich"], e=a["zwischen"] - 0.05, img="gen/showroom.png", cin="circle", cx=1600, cy=850, cout="cut")
 add(type="counter", s=a["hundert"] - 0.2, e=a["zwischen"] - 0.05, cout="cut", x=96, y=260, w=1000, at=a["hundert"], dur=1.3, to=100000, suf=" €", size=150, cls="paper",
     label=["oft mehrere", a["hundert"] - 0.2], sub=["stehen in deiner Ausstellung.", a["ausst"]], lsize=34)
-add(type="cutout", s=a["verk"] - 0.1, e=a["zwischen"] - 0.05, cout="cut", src="gen/kitchen_cut.png", x=640, y=380, w=1000, at=a["verk"] - 0.1)
 add(type="pills", s=a["profis"], e=a["zwischen"] - 0.05, items=[
     dict(t="Planungsprofis", at=a["profis"], x=110, y=640, size=30, icon="user"),
     dict(t="jede Stunde richtig Geld wert", at=a["stunde"], x=110, y=720, cls="o", size=30, icon="euro", out=a["zwischen"] - 0.05)])
 add(type="bars", s=a["zwischen"], e=a["nirgendwo"] - 0.05, cover="stone", cin="cut", cout="wipe", x=96, y=200, w=1240,
     title=W(("Zwischen", a["zwischen"] + 0.3), ("Anfrage", F("einer Anfrage und") + 0.3), ("und", F("und einem Küchenkäufer")), ("Käufer", F("Küchenkäufer"), "grad"), ("liegt:", F("liegt oft"))), rows=[
-        dict(label="Planungsgespräch", at=F("ein Planungsgespräch"), color="grad", steps=[dict(at=F("von zwei,"), v=.5, txt="2 Std."), dict(at=F("drei oder sogar"), v=.75, txt="3 Std."), dict(at=F("vier Stunden"), v=1.0, txt="4 Std.")]),
-        dict(label="Telefonat", at=F("kein zwei Minuten"), color="red", steps=[dict(at=F("zwei Minuten Telefonat."), v=.012, txt="2 Min.")])])
+        dict(label="Planungsgespräch", at=F("ein Planungsgespräch"), color="grad", steps=[dict(at=F("von zwei,"), v=.5, txt="2 Std."), dict(at=F("drei oder sogar"), v=.75, txt="3 Std."), dict(at=F("vier Stunden"), v=1.0, txt="4 Std.")])])
 add(type="gap", s=a["nirgendwo"], e=a["reflex"] - 0.05, cin="wipe", cout="cut", openAt=F("der Abstand zwischen"), labelAt=F("größer als"), gapLabel="nirgendwo größer als bei dir",
     title=W(("Der", F("der Abstand zwischen")), ("Abstand", F("Abstand zwischen Anfrage"), "grad"), ("zwischen", F("zwischen Anfrage und Käufer")), ("Anfrage", F("Anfrage und Käufer")), ("und", F("und Käufer größer")), ("Käufer.", F("Käufer größer"))),
     coins=[a["bares"] - 0.6, a["bares"] - 0.2, a["bares"] + 0.2, a["bares"] + 0.45, a["bares"] + 0.7], money=["…und genau dort verlierst du bares Geld.", F("und genau in diesem")])
@@ -182,9 +183,9 @@ add(type="chart", s=a["denn"], e=a["mehr1"] - 0.05, cout="cut", x=972, y=330, w=
     dict(pts=[[0, .06], [.3, .08], [.6, .1], [1, .12]], color="mute", at=F("macht dein Problem"), dur=1.0, label="Problem", lx=-140, ly=-74,
          morph=dict(pts=[[0, .06], [.3, .2], [.6, .55], [1, .96]], at=F("sie verschlimmert"), dur=0.9, color="red", label="Problem wird schlimmer", cls="r", spring=True))])
 add(type="mehr", s=a["mehr1"], e=a["bitter"] - 0.05, cin="cut", cout="circle", cx=1600, cy=850, items=[
-    dict(word="Termine", at=a["mehr1"], tr="cut", icon="cal", sub=[dict(t="greifen deine Planung gratis ab", at=F("die deine Planung")), dict(t="kaufen beim Möbeldiscounter um die Ecke", at=F("Möbeldiscounter"))]),
-    dict(head="Mehr Termine", word="ohne Budget", at=a["mehr2"], tr="up", icon="euro", sub=[dict(t="ohne Zeitplan", at=F("und Zeitplan"))]),
-    dict(word="Stunden", at=a["mehr3"], tr="wipe", icon="clock", sub=[dict(t="für Menschen, die niemals kaufen werden", at=F("für Menschen, die am Ende"))])])
+    dict(head="Mehr Termine", word="ohne Kaufkraft", at=a["mehr1"], tr="cut", icon="euro"),
+    dict(head="Mehr Termine", word="ohne Budget", at=a["mehr2"], tr="up", icon="cal"),
+    dict(head="Mehr Stunden", word="mit Menschen, die nie kaufen", at=a["mehr3"], tr="wipe", icon="clock")])
 add(type="map", s=a["bitter"], e=a["ertrinkst"] - 0.05, cout="cut", title=["Ein Lead. Vier Studios.", F("ein Portal verkauft")], pins=[
     dict(x=230, y=330, at=a["bitter"] + 0.3, label="dein Studio", s0="mine"),
     dict(x=640, y=280, at=a["bitter"] + 0.5, label="Mitbewerber", s0="grey"),
@@ -213,26 +214,25 @@ add(type="chart", s=a["verstanden"], e=a["kanschat"] - 0.05, x=110, y=330, w=860
     dict(pts=[[0, .8], [.3, .62], [.6, .4], [1, .14]], color="red", at=a["verstanden"] + 0.1, dur=1.0, label="umgekehrt", cls="g", labelAt=F("umgekehrt."), lx=-210, ly=-80,
          morph=dict(pts=[[0, .12], [.3, .35], [.6, .6], [1, .9]], at=F("verstanden und"), dur=1.0, color="green", spring=True))])
 add(type="cases", s=a["kanschat"], e=a["marq"] - 0.05, cin="wipe", cout="circle", cx=1640, cy=820, kicker=["✓", "Echte Studios"], cards=[
-    dict(x=96, y=200, w=780, h=560, at=a["kanschat"], name="Küchenplanung<br>Kanschat", logoH=120,
+    dict(x=96, y=200, w=780, h=440, at=a["kanschat"], name="Küchenplanung<br>Kanschat", logoH=120, photo="gen/faces/face3.png", photoPos="50% 30%",
          val=dict(at=F("rund 100.000"), to=100000, suf=" €", pre="rund ", dur=1.1), vsize=96, vsub="zusätzlicher Küchenumsatz", vsubAt=F("zusätzlicher Küchenumsatz"),
          chips=[dict(t="in den ersten 3 Monaten", at=F("in den ersten drei"))]),
-    dict(x=940, y=200, w=780, h=560, at=a["clemens"], logo="assets/clemens.svg", logoImgH=150, logoH=160,
+    dict(x=940, y=200, w=780, h=440, at=a["clemens"], logo="assets/clemens.svg", logoImgH=150, logoH=160, photo="gen/faces/face1.png", photoPos="50% 30%",
          val=dict(at=F("über 130.000"), to=130000, suf=" €", pre="über ", dur=1.1), vsize=96, vsub="zusätzlicher Umsatz", vsubAt=F("über 130.000") + 0.9)])
-add(type="pills", s=a["peaks"], e=a["marq"] - 0.05, items=[dict(t="keine kurzfristigen Peaks", at=a["peaks"], x=110, y=810, cls="g", size=30, icon="check")])
+add(type="pills", s=a["peaks"], e=a["marq"] - 0.05, items=[dict(t="keine kurzfristigen Peaks", at=a["peaks"], x=110, y=690, cls="g", size=30, icon="check")])
 add(type="cases", s=a["marq"], e=a["hinter"] - 0.05, cin="circle", cx=1640, cy=820, cout="cut", kicker=["✓", "Echte Studios"], cards=[
-    dict(x=96, y=170, w=1300, h=780, at=a["marq"], logo="assets/marquardt.png", logoBg="#000", logoImgH=120, logoH=170, place="",
-         val=dict(at=F("über 2,7 Millionen"), to=2.7, dec=1, pre="über ", suf=" Mio. €", dur=2.0), vsize=190, vsub="zusätzlicher Umsatz", vsubAt=F("an zusätzlichen Umsatz"),
+    dict(x=96, y=170, w=1300, h=600, at=a["marq"], logo="assets/marquardt.png", logoBg="#000", logoImgH=120, logoH=170, place="", photo="gen/faces/face2.png", photoS=210, photoPos="60% 25%",
+         val=dict(at=F("über 2,7 Millionen"), to=2.7, dec=1, pre="über ", suf=" Mio. €", dur=2.0), vsize=168, vsub="zusätzlicher Umsatz", vsubAt=F("an zusätzlichen Umsatz"),
          chips=[dict(t="in den letzten 12 Monaten", at=F("in den letzten zwölf"))])])
 
 # ---------------- TRIPLE-A ----------------
-add(type="chapter", s=a["hinter"], e=a["b1"] - 0.05, num="02", kicker="Das System", cin="wipe", cout="wipe",
-    title=W(("Das", F("das Triple-A-System.")), ("Triple-A-System.", F("Triple-A-System."), "grad")))
-add(type="pills", s=F("drei klaren Bausteinen"), e=a["b1"] - 0.05, items=[
-    dict(t="Anziehung", at=F("drei klaren Bausteinen"), x=110, y=870, size=30), dict(t="Auswahl", at=F("klaren Bausteinen"), x=340, y=870, size=30),
-    dict(t="Abschlussweg", at=F("Bausteinen und"), x=540, y=870, size=30)])
+add(type="kin", s=a["wir"], e=a["b1s"] - 0.05, cover="dim", cin="cut", cout="cut", nosubs=True, align="center", y=330, lines=[
+    dict(size=34, style="color:#B8B4AC;font-weight:600;letter-spacing:.14em", w=W(("DAS", a["wir"] + 0.15), ("SYSTEM", a["wir"] + 0.3))),
+    dict(size=170, w=W(("Triple-A-System", F("Triple-A-System."), "grad"))),
+    dict(size=44, style="color:#B8B4AC;font-weight:700;margin-top:22px", w=W(("Anziehung", a["b1"] + 0.2), ("·", a["b1"] + 0.3), ("Auswahl", a["b1"] + 0.4), ("·", a["b1"] + 0.5), ("Abschlussweg", a["b1"] + 0.6)))])
 NAMES = [["ANZIEHUNG", "Die Botschaft filtert vor dem ersten Klick."], ["AUSWAHL", "Jede Anfrage geprüft, bevor sie in deinen Kalender kommt."], ["ABSCHLUSSWEG", "Vom Klick zum Termin in wenigen Tagen."]]
-add(type="triple", s=a["b1"], e=a["passt"] - 0.05, cout="cut", y=140, filterAt=F("filtert die Botschaft"), names=NAMES,
-    active=[dict(i=0, at=a["b1"] + 0.3), dict(i=1, at=a["b2"])],
+add(type="triple", s=a["b1s"], e=a["passt"] - 0.05, cout="cut", y=140, names=NAMES,
+    active=[dict(i=0, at=a["b1s"] + 0.2), dict(i=1, at=a["b2"])],
     extras={0: [dict(k="chip", t="nicht: bloße „Kücheninteressenten“", at=F("bloße Kücheninteressenten"), cls="r", strike=F("sondern ganz konkret")),
                 dict(k="chip", t="sondern: unmittelbar vor dem Küchenkauf", at=F("unmittelbar vor"), cls="g", icon="check"),
                 dict(k="chip", t="filtert vor dem ersten Klick", at=F("bevor der erste Klick"), cls="o")],
@@ -244,7 +244,7 @@ add(type="triple", s=a["b1"], e=a["passt"] - 0.05, cout="cut", y=140, filterAt=F
 add(type="hand", s=F("den fast alle"), e=F("Jede Anfrage wird"), at=F("den fast alle"), dur=0.8, t="den überspringen fast alle", x=1310, y=60, size=52)
 add(type="pills", dim="r", s=a["passt"], e=a["b3"] - 0.05, items=[dict(t="Nur wer wirklich passt.", at=F("wer wirklich passt"), x=1180, y=320, cls="g", size=40, pad="18px 32px", icon="check")])
 add(type="triple", s=a["b3"], e=a["grundsatz"] - 0.05, cout="wipe", y=140, done=[0, 1], active=[dict(i=2, at=a["b3"] + 0.3)], names=NAMES,
-    extras={2: [dict(k="swap", a="Wochen", b="Tage", at=F("mehrere Wochen"), at2=F("wenige Tage.")), dict(k="bar", label="Kaufenergie", at=F("jeder zusätzliche Tag"), dur=2.6),
+    extras={2: [dict(k="swap", a="Wochen", b="Tage", at=F("mehrere Wochen"), at2=F("wenige Tage.")),
                 dict(k="chip", t="Wer zuerst ernst nimmt, gewinnt.", at=F("zuerst ernst genommen"), cls="g", icon="check")]})
 add(type="map", s=a["grundsatz"], e=a["weil"] - 0.05, cover="stone", cin="circle", cx=960, cy=540, cout="cut", x=980, y=150, w=844, h=780,
     title=["Ein Studio pro Region.", F("wir arbeiten pro Region")], circle=dict(x=380, y=370, r=220, at=F("mit genau einem"), label="dein Gebiet · exklusiv"),
@@ -258,7 +258,7 @@ add(type="kin", s=a["grundsatz"], e=a["weil"] - 0.05, cout="cut", x=96, y=300, w
 
 # ---------------- GARANTIE ----------------
 add(type="counter", s=a["garant"], e=a["geeignet"] - 0.05, cover="stone", cin="circle", cx=960, cy=540, cout="wipe", x=96, y=240, w=1700, at=F("von 50.000"), dur=1.4, to=50000,
-    suf=" €", size=300, cls="green", label=["zusätzlicher Umsatz, garantiert:", a["garant"] + 0.3], sub=["in den ersten 90 Tagen.", F("in den ersten 90")], lsize=34, ssize=52)
+    suf=" €", size=300, cls="green", label=["Unsere Garantie", a["garant"] + 0.3], sub=["zusätzlicher Umsatz in den ersten 90 Tagen.", F("in den ersten 90")], lsize=34, ssize=52)
 add(type="stamp", s=F("90 Tagen.") + 0.2, e=a["geeignet"] - 0.05, at=F("90 Tagen.") + 0.2, t="schriftlich garantiert*", x=560, y=650, size=50, color="#5BBF6A", rot=-6)
 add(type="pills", s=F("90 Tagen."), e=a["geeignet"] - 0.05, items=[dict(t="* für geeignete Küchenstudios", at=F("90 Tagen.") + 0.3, x=110, y=880, size=22)])
 add(type="cards", s=a["geeignet"], e=a["cta"] - 0.05, y=200, title=W(("Geeignet", a["geeignet"]), ("heißt:", a["geeignet"] + 0.7, "grad")), tsize=64, items=[
@@ -278,13 +278,15 @@ add(type="end", s=a["click2"], e=END, cin="wipe", cout="cut", nosubs=True,
 
 for sc in S:
     for f in sc.get("fly", []): f["from"] = f.pop("from_")
+    if "cout" not in sc and any(k["m"] == "full" and k.get("d", 0.7) == 0 and abs(k["t"] - sc["e"]) < 0.12 for k in layout):
+        sc["cout"] = "cut"
 
 # ---------------- background screen (live display) ----------------
 screen = [
     dict(t=0, logo=56, lines=[["Planbar", "", 44], ["neue", "", 44], ["Kunden.", "grad", 44]]),
     dict(t=a["minuten"], kicker=["4", "Minuten"], lines=[["Ein", "", 46], ["Denkfehler.", "red", 46]]),
     dict(t=a["klingt"], kicker=["01", "Paradoxon"], lines=[["Mehr", "", 44], ["Anfragen.", "", 44], ["Weniger", "", 44], ["Käufer.", "red", 44]]),
-    dict(t=a["reflex"], kicker=["02", "Reflex"], lines=[["Mehr", "", 46], ["Werbung,", "", 46], ["mehr", "", 46], ["Portale.", "grad", 46]]),
+    dict(t=a["reflex"] - 0.7, kicker=["02", "Reflex"], lines=[["Mehr", "", 46], ["Werbung,", "", 46], ["mehr", "", 46], ["Portale.", "grad", 46]]),
     dict(t=a["denn"], kicker=["!", "Twist"], lines=[["Du", "", 44], ["ertrinkst", "", 44], ["an den", "", 44], ["falschen.", "red", 48]]),
     dict(t=a["zurueck"], kicker=["✓", "Studios"], lines=[["Volle", "", 46], ["Auftrags-", "", 46], ["bücher.", "green", 46]]),
     dict(t=a["marq"], kicker=["✓", "Studios"], lines=[["2,7 Mio. €", "green", 48], ["in 12", "", 36], ["Monaten.", "", 36]]),
@@ -292,8 +294,8 @@ screen = [
     dict(t=a["b2"], kicker=["03", "Triple-A"], lines=[["Anziehung.", "mute", 40], ["Auswahl.", "", 40], ["Abschluss-", "mute", 40], ["weg.", "mute", 40]]),
     dict(t=a["b3"], kicker=["03", "Triple-A"], lines=[["Anziehung.", "mute", 40], ["Auswahl.", "mute", 40], ["Abschluss-", "", 40], ["weg.", "", 40]]),
     dict(t=a["grundsatz"], kicker=["1×", "Region"], lines=[["Ein", "", 48], ["Studio.", "", 48], ["Exklusiv.", "grad", 48]]),
-    dict(t=a["weil"], kicker=["✓", "Garantie"], lines=[["50.000 €", "green", 50], ["in 90", "", 38], ["Tagen.*", "", 38]]),
-    dict(t=a["cta"], kicker=["→", "Jetzt"], lines=[["Ist deine", "", 44], ["Region", "", 44], ["frei?", "grad", 44]]),
+    dict(t=a["weil"] - 0.7, kicker=["✓", "Garantie"], lines=[["50.000 €", "green", 50], ["in 90", "", 38], ["Tagen.*", "", 38]]),
+    dict(t=a["cta"] - 0.7, logo=64, lines=[]),
 ]
 occl = json.load(open("gen/occl.json"))
 timeline = dict(layout=layout, punch=punch, cams=cams, scenes=S, screen=screen, occl=occl, end=END, srcOffset=0)
@@ -344,7 +346,7 @@ for sc in S:
                 if x["k"] == "chip": fx(x["at"], "tick2", 0.3)
                 if x["k"] == "swap": fx(x["at2"], "error", 0.25)
     if ty == "gap":
-        for c in sc["coins"]: fx(c, "counter", 0.15)
+        for c in sc["coins"][:3]: sfx.append(dict(t=round(c, 3), n="counter", v=0.15, cut=0.32))
     if ty == "bars":
         for r in sc["rows"]:
             for s_ in r["steps"]: fx(s_["at"], "tick2", 0.3)

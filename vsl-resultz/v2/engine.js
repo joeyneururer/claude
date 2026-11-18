@@ -136,15 +136,20 @@ function drawScreen(t) {
   scr.style.transform = SM[key];
   css(occl, { left: TL.occl[key].x + 'px', top: TL.occl[key].y + 'px' }); occl.src = `gen/occl_${key}.png`;
   let i = 0; while (i + 1 < scrStates.length && scrStates[i + 1].stt.t <= t) i++;
+  const t0 = scrStates[i].stt.t, q = i === 0 ? 1 : ease.inOutCubic(P(t, t0, 0.32));
   scrStates.forEach((S, k) => {
-    const on = k === i, prev = k === i - 1;
-    const pi = ease.outExpo(P(t, scrStates[i].stt.t, 0.6));
-    S.n.style.display = on || (prev && pi < 1) ? '' : 'none';
+    const on = k === i, prev = k === i - 1 && q < 1;
+    S.n.style.display = on || prev ? '' : 'none';
     if (on) {
-      S.n.style.clipPath = i === 0 ? 'none' : `inset(${(1 - pi) * 100}% 0 0 0)`;
-      S.kw.forEach((w, j) => kwAnim(w, t, S.stt.t + 0.12 + j * 0.1));
-      S.chips.forEach((c, j) => slideIn(c, t, S.stt.t + 0.35 + j * 0.12, 0, 16));
-    } else if (prev) S.n.style.transform = `translateY(${-pi * 60}px)`;
+      S.n.style.clipPath = 'none'; S.n.style.transform = '';
+      const base = i === 0 ? t0 : t0 + 0.26;
+      S.kw.forEach((w, j) => kwAnim(w, t, base + j * 0.09));
+      S.chips.forEach((c, j) => slideIn(c, t, base + 0.25 + j * 0.12, 0, 16));
+      const img = S.n.querySelector('img'); if (img) { img.style.visibility = t >= base ? '' : 'hidden'; img.style.transform = `translateY(${(1 - ease.outExpo(P(t, base, 0.5))) * 20}px)`; }
+    } else if (prev) {
+      S.n.style.clipPath = `inset(0 0 ${q * 100}% 0)`;
+      S.n.style.transform = `translateY(${-q * 40}px)`;
+    }
   });
   document.getElementById('scrGlow').style.opacity = 0.85 + 0.15 * Math.sin(t * 0.7);
 }
@@ -161,12 +166,21 @@ function drawSubs(t, st, cov, nosubs) {
     curCue = cue;
   }
   const spans = subsEl.children;
-  cue.words.forEach((w, i) => spans[i].classList.toggle('on', t >= w.s - 0.03 && t < w.e + 0.08));
+  cue.words.forEach((w, i) => {
+    const sp = spans[i], d = Math.max(0.18, w.e - w.s), p = clamp((t - w.s + 0.03) / d);
+    const on = t >= w.s - 0.03 && t < w.e + 0.12;
+    if (on) {
+      const k = Math.sin(Math.PI * clamp(p, 0, 1));
+      sp.style.backgroundPosition = `${100 - p * 100}% 0`;
+      sp.style.filter = `drop-shadow(0 2px 6px rgba(0,0,0,.55)) drop-shadow(0 0 ${6 + 10 * k}px rgba(255,232,206,${0.25 + 0.45 * k}))`;
+      sp.classList.add('on');
+    } else if (sp.classList.contains('on')) { sp.classList.remove('on'); sp.style.filter = ''; }
+  });
   const [x, y, w, h] = st.r; const m = st.mode;
   subsEl.classList.toggle('boxed', cov || m === 'pip' || m === 'out');
-  if (cov || m === 'pip' || m === 'out') css(subsEl, { left: '96px', right: 'auto', bottom: '52px', top: 'auto', fontSize: '34px', maxWidth: '1180px' });
-  else if (m === 'full') css(subsEl, { left: '120px', right: 'auto', bottom: '84px', top: 'auto', fontSize: '54px', maxWidth: '1320px' });
-  else css(subsEl, { left: (x + 40) + 'px', right: 'auto', bottom: (H - (y + h) + 36) + 'px', top: 'auto', fontSize: '40px', maxWidth: (w - 80) + 'px' });
+  if (cov || m === 'pip' || m === 'out') css(subsEl, { left: '96px', right: 'auto', bottom: '52px', top: 'auto', fontSize: '34px', maxWidth: '1180px', width: 'auto', textAlign: 'left' });
+  else if (m === 'full') css(subsEl, { left: '300px', right: 'auto', bottom: '84px', top: 'auto', fontSize: '54px', maxWidth: '1320px', width: '1320px', textAlign: 'center' });
+  else css(subsEl, { left: (x + 40) + 'px', right: 'auto', bottom: (H - (y + h) + 36) + 'px', top: 'auto', fontSize: '40px', maxWidth: (w - 80) + 'px', width: 'auto', textAlign: 'left' });
   const k = ease.outBack(P(t, cue.s, 0.22));
   subsEl.style.transform = `translateY(${(1 - k) * 14}px)`;
 }
@@ -242,10 +256,11 @@ const TYPES = {};
 // kinetic type: lines of [text, at, cls]
 TYPES.kin = (root, sc) => {
   const cv = sc.cover ? cover(root, sc, sc.cover) : null;
-  const box = el(root, `<div class="abs" style="left:${sc.x ?? 96}px;top:${sc.y ?? 300}px;width:${sc.w ?? 1700}px"></div>`);
+  const ctr = sc.align === 'center';
+  const box = el(root, `<div class="abs" style="left:${ctr ? 0 : sc.x ?? 96}px;top:${sc.y ?? 300}px;width:${ctr ? 1920 : sc.w ?? 1700}px;text-align:${ctr ? 'center' : 'left'}"></div>`);
   const words = [], strikes = [];
   sc.lines.forEach((ln, li) => {
-    const line = el(box, `<div class="h1" style="font-size:${(ln.size ?? sc.size ?? 140)}px;margin-bottom:${sc.gap ?? 10}px;${ln.style ?? ''}"></div>`);
+    const line = el(box, `<div class="h1" style="font-size:${(ln.size ?? sc.size ?? 140)}px;margin-bottom:${sc.gap ?? 10}px;${sc.nowrap ? 'white-space:nowrap;' : ''}${ln.style ?? ''}"></div>`);
     ln.w.forEach(([txt, at, cls]) => {
       const k = el(line, kwHTML(txt, cls || ''));
       line.appendChild(document.createTextNode(' '));
@@ -559,9 +574,9 @@ TYPES.mehr = (root, sc) => {
   const panes = sc.items.map((it, i) => {
     const p = el(root, `<div class="abs" style="inset:0"><div class="abs" style="left:96px;top:260px;width:1500px">
       <div class="h1 mute" style="font-size:120px">${kwHTML(it.head || 'Mehr')}</div>
-      <div class="h1" style="font-size:${it.word.length > 10 ? 150 : 190}px;margin-top:-6px">${kwHTML(it.word, 'red')}</div>
+      <div class="h1" style="font-size:${it.word.length > 18 ? 118 : it.word.length > 10 ? 150 : 190}px;margin-top:-6px;max-width:1500px">${it.word.split(' ').map(x => kwHTML(x, 'red')).join(' ')}</div>
       <div class="subs" style="margin-top:34px;display:flex;gap:16px;flex-wrap:wrap"></div></div>
-      <div class="abs ic" style="right:140px;top:520px;width:260px;height:260px;color:#3A3835">${ICON[it.icon] || ''}</div></div>`);
+      <div class="abs ic" style="right:150px;top:230px;width:240px;height:240px;color:#3A3835">${ICON[it.icon] || ''}</div></div>`);
     const subs = p.querySelector('.subs');
     const sp = (it.sub || []).map(s => ({ n: el(subs, `<div class="pill ${s.cls || 'r'}" style="font-size:30px;padding:14px 26px">${s.t}</div>`), at: s.at }));
     return { p, it, sp, kw: [...p.querySelectorAll('.kw>span')], ic: p.querySelector('.ic') };
@@ -688,21 +703,23 @@ TYPES.cases = (root, sc) => {
   const kick = el(root, `<div class="abs lbl" style="left:96px;top:96px;display:flex;align-items:center;gap:16px"><span class="chapnum">${sc.kicker[0]}</span><span style="width:120px;height:2px;background:#3A3835;display:inline-block"></span>${sc.kicker[1]}</div>`);
   const cards = sc.cards.map(c => {
     const n = el(root, `<div class="card" style="left:${c.x}px;top:${c.y}px;width:${c.w}px;height:${c.h}px;padding:40px 44px;overflow:hidden">
+      ${c.photo ? `<div class="ph" style="position:absolute;right:40px;top:36px;width:${c.photoS ?? 150}px;height:${c.photoS ?? 150}px;border-radius:999px;overflow:hidden;box-shadow:0 0 0 4px #1F1E1C,0 0 0 6px rgba(91,191,106,.55),0 18px 40px rgba(0,0,0,.5)"><img src="${c.photo}" style="width:100%;height:100%;object-fit:cover;object-position:${c.photoPos ?? '50% 25%'}"></div>` : ''}
       <div style="height:${c.logoH ?? 110}px;display:flex;align-items:center">${c.logo ? `<div style="background:${c.logoBg ?? 'transparent'};border-radius:10px;padding:${c.logoBg ? '14px 18px' : '0'};display:inline-flex"><img src="${c.logo}" style="height:${c.logoImgH ?? 90}px"></div>` : `<div style="font-weight:800;font-size:46px;line-height:1.05">${c.name}</div>`}</div>
       <div class="place" style="font-weight:600;font-size:24px;color:var(--mute2);margin-top:18px">${c.place || ''}</div>
-      <div class="v h1 num green" style="font-size:${c.vsize ?? 120}px;letter-spacing:-.04em;margin-top:26px"></div>
+      <div class="v h1 num green" style="font-size:${c.vsize ?? 120}px;letter-spacing:-.04em;margin-top:26px;white-space:nowrap"></div>
       <div class="vs" style="font-weight:700;font-size:30px;margin-top:8px">${c.vsub || ''}</div>
       <div class="chips" style="display:flex;gap:12px;margin-top:22px;flex-wrap:wrap"></div></div>`);
     const chips = (c.chips || []).map(ch => ({ n: el(n.querySelector('.chips'), `<div class="pill ${ch.cls || 'g'}">${ch.t}</div>`), at: ch.at }));
-    return { n, c, v: n.querySelector('.v'), vs: n.querySelector('.vs'), pl: n.querySelector('.place'), chips };
+    return { n, c, v: n.querySelector('.v'), vs: n.querySelector('.vs'), pl: n.querySelector('.place'), chips, ph: n.querySelector('.ph') };
   });
   const ghosts = (sc.ghosts || []).map((g, i) => el(root, `<div class="card" style="left:${g.x + i * 26}px;top:${g.y + i * 22}px;width:${g.w}px;height:${g.h}px;opacity:${0.5 - i * 0.12}"></div>`));
   const gl = sc.ghostLabel ? el(root, `<div class="abs pill" style="left:${sc.ghostLabel.x}px;top:${sc.ghostLabel.y}px;font-size:26px">${sc.ghostLabel.t}</div>`) : null;
   return t => {
     cv(t);
     kick.style.clipPath = `inset(0 ${100 - ease.outExpo(P(t, sc.s + 0.2, 0.6)) * 100}% 0 0)`;
-    cards.forEach(({ n, c, v, vs, pl, chips }) => {
+    cards.forEach(({ n, c, v, vs, pl, chips, ph }) => {
       slideIn(n, t, c.at, 120, 0);
+      if (ph) pop(ph, t, c.at + 0.25, 0.4);
       if (c.shiftAt) { const k = spring(t - c.shiftAt, 1.3, 0.7); n.style.transform += ` translate(${(t >= c.shiftAt ? k : 0) * c.shiftX}px,0) scale(${mix(1, c.shiftS ?? 1, t >= c.shiftAt ? clamp(k) : 0)})`; }
       slideIn(pl, t, c.placeAt ?? c.at, 0, 14);
       if (c.val) {
